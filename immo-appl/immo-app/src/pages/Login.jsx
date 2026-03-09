@@ -77,8 +77,7 @@ export default function Login() {
       <div className="login-bg" />
       <div className="login-card">
         <div className="login-header">
-          <img src="/logo.png" alt="Logo" className="login-logo-img" />
-          <h1 className="login-title">ToulonFINDAI</h1>
+          <img src="/logo-toulon-ai.svg" alt="ToulonFINDAI" className="login-logo-svg" />
           <p className="login-subtitle">Trouvez le bien de vos rêves</p>
         </div>
 

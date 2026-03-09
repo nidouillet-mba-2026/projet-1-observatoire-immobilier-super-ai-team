@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp, computeScore } from '../context/AppContext';
 import {
@@ -177,6 +177,26 @@ export default function Dashboard() {
   const [predType,   setPredType]   = useState(0);
   const [predEtage,  setPredEtage]  = useState(3);
   const [predResult, setPredResult] = useState(null);
+
+  // State pour les données de régression de l'API
+  const [regressionData, setRegressionData] = useState(null);
+  const [regressionLoading, setRegressionLoading] = useState(false);
+
+  // Charger les données de régression depuis l'API
+  useEffect(() => {
+    if (activeTab === 'regression' && !regressionData) {
+      setRegressionLoading(true);
+      fetch('http://localhost:5000/api/regression')
+        .then(res => res.json())
+        .then(data => {
+          setRegressionData(data);
+          setRegressionLoading(false);
+        })
+        .catch(() => {
+          setRegressionLoading(false);
+        });
+    }
+  }, [activeTab, regressionData]);
 
   // Couleurs selon le thème
   const gc   = theme === 'dark' ? '#374151' : '#e5e7eb';
@@ -733,41 +753,87 @@ export default function Dashboard() {
       {activeTab === 'regression' && (
         <div className="reg-grid">
           <div>
-            <div className="chart-card">
-              <div className="chart-header">
-                <div>
-                  <h3 className="chart-title">Modèle de régression linéaire multiple</h3>
-                  <p className="chart-sub">R² = 0.847 · n = 643 transactions DVF</p>
-                </div>
+            {regressionLoading ? (
+              <div className="chart-card">
+                <p style={{ textAlign: 'center', padding: 40 }}>Chargement des données...</p>
               </div>
-              <div className="reg-formula">
-                <div className="formula-line">Prix = β₀ + β₁·Surface + β₂·Quartier + β₃·Type + β₄·Étage + ε</div>
-                <div className="formula-coef">
-                  β₀ (intercept)&nbsp;&nbsp;&nbsp; = <span>24 500 €</span><br />
-                  β₁ (surface m²)&nbsp;&nbsp; = <span>+3 250 €/m²</span><br />
-                  β₂ (Mourillon)&nbsp;&nbsp;&nbsp; = <span>+42 800 €</span><br />
-                  β₂ (Centre-Ville)&nbsp; = <span>+31 200 €</span><br />
-                  β₂ (Siblas)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = <span>−18 400 €</span><br />
-                  β₃ (Maison vs App) = <span>+28 600 €</span><br />
-                  β₄ (étage)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = <span>+2 100 €/étage</span><br />
-                  R²&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = <span>0.847</span>&nbsp;&nbsp;
-                  RMSE = <span>18 400 €</span>
+            ) : (
+              <>
+                {/* Scatter plot surface → prix */}
+                <div className="chart-card">
+                  <div className="chart-header">
+                    <div>
+                      <h3 className="chart-title">Corrélation surface → prix (DVF Toulon)</h3>
+                      <p className="chart-sub">
+                        {regressionData ? `n = ${regressionData.n_transactions} transactions · R² = ${regressionData.r_squared}` : 'Chargement...'}
+                      </p>
+                    </div>
+                  </div>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <ComposedChart margin={{ top: 10, right: 20, left: 0, bottom: 24 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={gc} />
+                      <XAxis
+                        type="number" dataKey="surface" name="Surface" unit="m²"
+                        domain={['auto', 'auto']} tick={{ fontSize: 9, fill: tc }}
+                        label={{ value: 'Surface (m²)', position: 'insideBottom', offset: -14, fontSize: 10, fill: tc }}
+                      />
+                      <YAxis
+                        type="number" dataKey="prix" name="Prix"
+                        tick={{ fontSize: 9, fill: tc }}
+                        tickFormatter={v => `${(v / 1000).toFixed(0)}K€`}
+                      />
+                      <Tooltip content={({ active, payload }) => {
+                        if (!active || !payload?.length) return null;
+                        const d = payload[0]?.payload;
+                        return (
+                          <div style={{ background: tbg, border: `1px solid ${tbrd}`, borderRadius: 8, padding: '10px 14px', fontSize: 12, color: ttxt }}>
+                            {d.surface !== undefined && <p>Surface : {d.surface} m²</p>}
+                            {d.prix !== undefined && <p style={{ color: '#f0a500' }}>Prix : {d.prix.toLocaleString('fr-FR')} €</p>}
+                          </div>
+                        );
+                      }} />
+                      <Scatter name="Transactions DVF" data={regressionData?.scatter_points || SCATTER_POINTS} fill="rgba(240,165,0,0.25)" r={3} />
+                      <Line
+                        data={regressionData?.regression_line || REGR_LINE} dataKey="prix" name="Régression linéaire"
+                        stroke="#00c896" strokeWidth={2.5} dot={false} type="linear"
+                      />
+                    </ComposedChart>
+                  </ResponsiveContainer>
                 </div>
-              </div>
-              <p className="chart-sub" style={{ marginBottom: 8, marginTop: 12 }}>Résidus du modèle</p>
-              <ResponsiveContainer width="100%" height={180}>
-                <ScatterChart margin={{ top: 5, right: 16, left: 10, bottom: 24 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={gc} />
-                  <XAxis dataKey="n" name="n" type="number" tick={{ fontSize: 8, fill: tc }}
-                    label={{ value: 'n transactions', position: 'insideBottom', offset: -14, fontSize: 9, fill: tc }} />
-                  <YAxis dataKey="r" name="Résidu" type="number" tick={{ fontSize: 8, fill: tc }}
-                    label={{ value: 'Résidu €/m²', angle: -90, position: 'insideLeft', fontSize: 9, fill: tc }} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Scatter name="Résidus +" data={RESIDUALS_POS} fill="rgba(0,200,150,0.55)" />
-                  <Scatter name="Résidus −" data={RESIDUALS_NEG} fill="rgba(224,82,82,0.55)" />
-                </ScatterChart>
-              </ResponsiveContainer>
-            </div>
+
+                {/* Coefficients du modèle */}
+                <div className="chart-card">
+                  <div className="chart-header">
+                    <div>
+                      <h3 className="chart-title">Modèle de régression linéaire</h3>
+                      <p className="chart-sub">Prix = α + β × Surface</p>
+                    </div>
+                  </div>
+                  <div className="reg-formula">
+                    <div className="formula-line">Prix = α + β · Surface</div>
+                    <div className="formula-coef">
+                      α (intercept)&nbsp;&nbsp;&nbsp; = <span>{regressionData ? `${regressionData.alpha.toLocaleString('fr-FR')} €` : '...'}</span><br />
+                      β (surface m²)&nbsp;&nbsp; = <span>{regressionData ? `+${regressionData.beta.toLocaleString('fr-FR')} €/m²` : '...'}</span><br />
+                      R²&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = <span>{regressionData?.r_squared || '...'}</span>&nbsp;&nbsp;
+                      RMSE = <span>{regressionData ? `${regressionData.rmse.toLocaleString('fr-FR')} €` : '...'}</span>
+                    </div>
+                  </div>
+                  <p className="chart-sub" style={{ marginBottom: 8, marginTop: 12 }}>Résidus du modèle</p>
+                  <ResponsiveContainer width="100%" height={180}>
+                    <ScatterChart margin={{ top: 5, right: 16, left: 10, bottom: 24 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={gc} />
+                      <XAxis dataKey="n" name="n" type="number" tick={{ fontSize: 8, fill: tc }}
+                        label={{ value: 'n transactions', position: 'insideBottom', offset: -14, fontSize: 9, fill: tc }} />
+                      <YAxis dataKey="r" name="Résidu" type="number" tick={{ fontSize: 8, fill: tc }}
+                        label={{ value: 'Résidu €', angle: -90, position: 'insideLeft', fontSize: 9, fill: tc }} />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Scatter name="Résidus +" data={(regressionData?.residuals || RESIDUALS).filter(r => r.r >= 0)} fill="rgba(0,200,150,0.55)" />
+                      <Scatter name="Résidus −" data={(regressionData?.residuals || RESIDUALS).filter(r => r.r < 0)} fill="rgba(224,82,82,0.55)" />
+                    </ScatterChart>
+                  </ResponsiveContainer>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="predictor-tool">
