@@ -12,13 +12,15 @@ export default function Navbar() {
   return (
     <nav className={`navbar ${isAcheteur ? 'navbar-acheteur' : 'navbar-agent'}`}>
       <div className="navbar-left">
-        <div
+        <button
+          type="button"
           className="navbar-avatar"
           onClick={() => navigate('/profil')}
           title="Mon profil"
+          aria-label="Mon profil"
         >
           {initiales}
-        </div>
+        </button>
 
         <div className="navbar-profile-pill">
           <span className="profile-emoji">{isAcheteur ? '🏡' : '💼'}</span>
@@ -26,31 +28,37 @@ export default function Navbar() {
         </div>
 
         <button
+          type="button"
           className="navbar-favoris-btn"
           onClick={() => navigate('/favoris')}
           title="Mes favoris"
+          aria-label="Mes favoris"
         >
-          <span>🔖</span>
+          <span>❤️</span>
           {favoris.length > 0 && (
             <span className="favoris-badge">{favoris.length}</span>
           )}
         </button>
       </div>
 
-      <div className="navbar-center" onClick={() => navigate('/accueil')}>
-        <span className="navbar-logo">🏠</span>
-        <div className="navbar-brand-wrap">
-          <span className="navbar-brand">ImmoSearch</span>
-          <span className="navbar-brand-sub">Toulon</span>
+      <button
+        type="button"
+        className="navbar-center"
+        onClick={() => navigate('/accueil')}
+        aria-label="Accueil"
+      >
+        <div className="logo-container">
+          <span className="brand-main">TOULON</span>
+          <span className="brand-accent">FINDAI</span>
         </div>
-      </div>
+      </button>
 
       <div className="navbar-right">
         <span className="navbar-login-name">{user?.login}</span>
-        <button className="theme-toggle" onClick={toggleTheme} title="Basculer thème">
+        <button type="button" className="theme-toggle" onClick={toggleTheme} title="Basculer thème" aria-label="Basculer thème">
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <button className="navbar-logout" onClick={() => navigate('/')}>
+        <button type="button" className="navbar-logout" onClick={() => navigate('/')}>
           Déconnexion
         </button>
       </div>

@@ -4,19 +4,71 @@ import { useApp } from '../context/AppContext';
 import './Login.css';
 
 export default function Login() {
-  const [login, setLogin] = useState('');
-  const [mdp, setMdp] = useState('');
-  const [profil, setProfilType] = useState('');
+  const { profil, setProfil, setUser } = useApp();
+
+  const [typeBien, setTypeBien] = useState(profil?.typeBien?.toLowerCase() || '');
+  const [typeAppartement, setTypeAppartement] = useState(profil?.typeAppartement || []);
+  const [budgetMax, setBudgetMax] = useState(profil?.prixMax?.toString() || '');
+  const [environnement, setEnvironnement] = useState(profil?.environnement?.[0]?.toLowerCase() || '');
   const [error, setError] = useState('');
-  const { setUser } = useApp();
   const navigate = useNavigate();
 
+  const toggleTypeAppartement = (type) => {
+    setTypeAppartement(prev =>
+      prev.includes(type)
+        ? prev.filter(t => t !== type)
+        : [...prev, type]
+    );
+  };
+
+  const mapTypeBien = (type) => {
+    if (type === 'appartement') return 'Appartement';
+    if (type === 'maison') return 'Maison';
+    return 'Tous';
+  };
+
+  const mapEnvironnement = (env) => {
+    if (env === 'urbain') return ['Ville', 'Centre-Ville'];
+    if (env === 'periurbain') return ['Périurbain', 'Résidentiel'];
+    if (env === 'rural') return ['Rural', 'Campagne'];
+    return ['Ville'];
+  };
+
+  const getPiecesFromTypes = (types) => {
+    if (!types.length) return 3;
+    const nums = types.map(t => Number.parseInt(t.replace('T', ''), 10));
+    return Math.min(...nums);
+  };
+
   const handleSubmit = () => {
-    if (!login || !mdp || !profil) {
-      setError('Veuillez remplir tous les champs et choisir un profil.');
+    if (!typeBien) {
+      setError('Veuillez sélectionner un type de bien.');
       return;
     }
-    setUser({ login, profil });
+    if ((typeBien === 'appartement' || typeBien === 'les-deux') && typeAppartement.length === 0) {
+      setError('Veuillez sélectionner au moins un type d\'appartement.');
+      return;
+    }
+    if (!budgetMax) {
+      setError('Veuillez indiquer votre budget maximum.');
+      return;
+    }
+    if (!environnement) {
+      setError('Veuillez sélectionner un environnement.');
+      return;
+    }
+
+    const newProfil = {
+      ...profil,
+      typeBien: mapTypeBien(typeBien),
+      typeAppartement,
+      prixMax: Number.parseInt(budgetMax, 10),
+      pieces: getPiecesFromTypes(typeAppartement),
+      environnement: mapEnvironnement(environnement),
+    };
+
+    setProfil(newProfil);
+    setUser({ profil: newProfil });
     navigate('/accueil');
   };
 
@@ -25,54 +77,102 @@ export default function Login() {
       <div className="login-bg" />
       <div className="login-card">
         <div className="login-header">
-          <div className="login-logo">🏠</div>
-          <h1 className="login-title">ImmoSearch</h1>
-          <p className="login-subtitle">Votre recherche immobilière intelligente</p>
+          <img src="/logo.png" alt="Logo" className="login-logo-img" />
+          <h1 className="login-title">ToulonFINDAI</h1>
+          <p className="login-subtitle">Trouvez le bien de vos rêves</p>
         </div>
 
         <div className="login-form">
-          <div className="login-field">
-            <label>Identifiant</label>
-            <input
-              type="text"
-              placeholder="Votre identifiant"
-              value={login}
-              onChange={e => setLogin(e.target.value)}
-            />
-          </div>
-
-          <div className="login-field">
-            <label>Mot de passe</label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={mdp}
-              onChange={e => setMdp(e.target.value)}
-            />
-          </div>
-
-          <div className="login-field">
-            <label>Profil</label>
-            <div className="profil-choices">
+          <fieldset className="login-field">
+            <legend>Je recherche</legend>
+            <div className="choice-grid three-cols">
               <button
-                className={`profil-btn ${profil === 'Acheteur' ? 'active' : ''}`}
-                onClick={() => setProfilType('Acheteur')}
+                type="button"
+                className={`choice-btn ${typeBien === 'appartement' ? 'active' : ''}`}
+                onClick={() => setTypeBien('appartement')}
               >
-                🏡 Acheteur
+                🏢 Appartement
               </button>
               <button
-                className={`profil-btn ${profil === 'Agent immobilier' ? 'active' : ''}`}
-                onClick={() => setProfilType('Agent immobilier')}
+                type="button"
+                className={`choice-btn ${typeBien === 'maison' ? 'active' : ''}`}
+                onClick={() => setTypeBien('maison')}
               >
-                💼 Agent immobilier
+                🏡 Maison
               </button>
+              <button
+                type="button"
+                className={`choice-btn ${typeBien === 'les-deux' ? 'active' : ''}`}
+                onClick={() => setTypeBien('les-deux')}
+              >
+                🏘️ Les deux
+              </button>
+            </div>
+          </fieldset>
+
+          {(typeBien === 'appartement' || typeBien === 'les-deux') && (
+            <fieldset className="login-field">
+              <legend>Type d'appartement</legend>
+              <div className="choice-grid four-cols">
+                {['T2', 'T3', 'T4', 'T5'].map(type => (
+                  <button
+                    type="button"
+                    key={type}
+                    className={`choice-btn small ${typeAppartement.includes(type) ? 'active' : ''}`}
+                    onClick={() => toggleTypeAppartement(type)}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          )}
+
+          <div className="login-field">
+            <label htmlFor="budget-input">Budget maximum</label>
+            <div className="budget-input">
+              <input
+                id="budget-input"
+                type="number"
+                placeholder="Ex: 300000"
+                value={budgetMax}
+                onChange={e => setBudgetMax(e.target.value)}
+              />
+              <span className="budget-suffix">€</span>
             </div>
           </div>
 
+          <fieldset className="login-field">
+            <legend>Environnement souhaité</legend>
+            <div className="choice-grid three-cols">
+              <button
+                type="button"
+                className={`choice-btn ${environnement === 'urbain' ? 'active' : ''}`}
+                onClick={() => setEnvironnement('urbain')}
+              >
+                🏙️ Urbain
+              </button>
+              <button
+                type="button"
+                className={`choice-btn ${environnement === 'periurbain' ? 'active' : ''}`}
+                onClick={() => setEnvironnement('periurbain')}
+              >
+                🏘️ Périurbain
+              </button>
+              <button
+                type="button"
+                className={`choice-btn ${environnement === 'rural' ? 'active' : ''}`}
+                onClick={() => setEnvironnement('rural')}
+              >
+                🌳 Rural
+              </button>
+            </div>
+          </fieldset>
+
           {error && <p className="login-error">{error}</p>}
 
-          <button className="login-submit" onClick={handleSubmit}>
-            Se connecter
+          <button type="button" className="login-submit" onClick={handleSubmit}>
+            Rechercher
           </button>
         </div>
       </div>

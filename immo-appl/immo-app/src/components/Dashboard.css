@@ -28,7 +28,6 @@
   display: flex;
   border-bottom: 1px solid var(--gray-200);
   gap: 0;
-  overflow-x: auto;
   background: var(--white);
   border-radius: var(--radius) var(--radius) 0 0;
 }
