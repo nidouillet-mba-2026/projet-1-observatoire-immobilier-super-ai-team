@@ -41,8 +41,8 @@
   box-shadow: 0 2px 16px rgba(29, 78, 216, 0.35);
 }
 .navbar-agent {
-  background: var(--orange);
-  box-shadow: 0 2px 12px rgba(224, 123, 57, 0.3);
+  background: #ada5a0;
+  box-shadow: 0 2px 12px rgba(173, 165, 160, 0.3);
 }
 
 /* ── Gauche ── */
@@ -105,7 +105,7 @@
   justify-content: center;
 }
 .navbar-acheteur .favoris-badge { color: #1d4ed8; }
-.navbar-agent    .favoris-badge { color: var(--orange); }
+.navbar-agent    .favoris-badge { color: #ada5a0; }
 
 /* ── Centre ── */
 .navbar-center {
@@ -155,3 +155,15 @@
   border: 1px solid rgba(255,255,255,0.25);
 }
 .navbar-logout:hover { background: rgba(0,0,0,0.35); }
+
+/* ── Mode sombre ── */
+body.dark .navbar-agent {
+  background: #3d3a38;
+  box-shadow: 0 2px 12px rgba(61, 58, 56, 0.5);
+}
+body.dark .navbar-acheteur {
+  background: linear-gradient(135deg, #1e3a5f 0%, #312e81 100%);
+  box-shadow: 0 2px 16px rgba(30, 58, 95, 0.5);
+}
+body.dark .navbar-agent .favoris-badge { color: #3d3a38; }
+body.dark .navbar-acheteur .favoris-badge { color: #1e3a5f; }
