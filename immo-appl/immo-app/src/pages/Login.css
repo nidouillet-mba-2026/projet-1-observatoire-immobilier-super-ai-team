@@ -35,18 +35,10 @@
   margin-bottom: 36px;
 }
 
-.login-logo-img {
-  height: 120px;
+.login-logo-svg {
+  height: 60px;
   width: auto;
   margin-bottom: 16px;
-  border-radius: 12px;
-}
-
-.login-title {
-  font-family: 'DM Serif Display', serif;
-  font-size: 28px;
-  color: var(--orange);
-  font-weight: 400;
 }
 
 .login-subtitle {

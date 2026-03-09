@@ -47,10 +47,7 @@ export default function Navbar() {
         onClick={() => navigate('/accueil')}
         aria-label="Accueil"
       >
-        <div className="logo-container">
-          <span className="brand-main">TOULON</span>
-          <span className="brand-accent">FINDAI</span>
-        </div>
+        <img src="/logo-toulon-ai.svg" alt="ToulonFINDAI" className="navbar-logo-svg" />
       </button>
 
       <div className="navbar-right">

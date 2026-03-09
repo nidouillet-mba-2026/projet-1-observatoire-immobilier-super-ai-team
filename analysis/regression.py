@@ -42,4 +42,6 @@ def r_squared(alpha: float, beta: float, x: list, y: list) -> float:
     ss_res = sum_of_sqerrors(alpha, beta, x, y)
     y_bar = mean(y)
     ss_tot = sum((y_i - y_bar) ** 2 for y_i in y)
+    if ss_tot == 0:
+        return 1.0
     return 1 - (ss_res / ss_tot)

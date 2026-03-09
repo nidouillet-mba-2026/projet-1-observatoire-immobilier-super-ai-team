@@ -16,15 +16,21 @@ def mean(xs: list[float]) -> float:
 
 def median(xs: list[float]) -> float:
     """Retourne la mediane d'une liste de nombres."""
-    # VOTRE CODE ICI
-    raise NotImplementedError("Implementez median() - voir Grus ch.5")
+    sorted_xs = sorted(xs)
+    n = len(sorted_xs)
+    mid = n // 2
+    if n % 2 == 1:
+        return sorted_xs[mid]
+    return (sorted_xs[mid - 1] + sorted_xs[mid]) / 2
 
 
 def variance(xs: list[float]) -> float:
     """Retourne la variance d'une liste de nombres."""
     n = len(xs)
+    if n < 2:
+        return 0.0
     x_bar = mean(xs)
-    return sum((x - x_bar) ** 2 for x in xs) / n
+    return sum((x - x_bar) ** 2 for x in xs) / (n - 1)
 
 
 def standard_deviation(xs: list[float]) -> float:
@@ -35,9 +41,11 @@ def standard_deviation(xs: list[float]) -> float:
 def covariance(xs: list[float], ys: list[float]) -> float:
     """Retourne la covariance entre deux series."""
     n = len(xs)
+    if n < 2:
+        return 0.0
     x_bar = mean(xs)
     y_bar = mean(ys)
-    return sum((xs[i] - x_bar) * (ys[i] - y_bar) for i in range(n)) / n
+    return sum((x - x_bar) * (y - y_bar) for x, y in zip(xs, ys)) / (n - 1)
 
 
 def correlation(xs: list[float], ys: list[float]) -> float:
@@ -48,5 +56,5 @@ def correlation(xs: list[float], ys: list[float]) -> float:
     std_x = standard_deviation(xs)
     std_y = standard_deviation(ys)
     if std_x == 0 or std_y == 0:
-        return 0
+        return 0.0
     return covariance(xs, ys) / (std_x * std_y)
