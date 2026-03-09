@@ -1,0 +1,30 @@
+/* Importation de la police */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap');
+
+.logo-container {
+    font-family: 'Montserrat', sans-serif;
+    display: flex;
+    align-items: center;
+    letter-spacing: -0.02em; /* Pour un look plus compact et pro */
+    text-transform: uppercase;
+}
+
+.brand-main {
+    color: #1A365D; /* Bleu Marine profond (Sérieux/Toulon) */
+    font-weight: 800;
+    font-size: 2.5rem;
+}
+
+.brand-accent {
+    color: #E68A00; /* Orange/Jaune chaud (Innovation/Soleil) */
+    font-weight: 500;
+    font-size: 2.5rem;
+    margin-left: 2px;
+}
+
+.sub-text {
+    font-size: 0.9rem;
+    color: #64748b;
+    font-weight: 500;
+    display: block; /* À utiliser si vous ajoutez "Observatoire" en dessous */
+}

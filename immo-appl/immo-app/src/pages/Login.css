@@ -19,7 +19,7 @@
   border-radius: 20px;
   padding: 48px 40px;
   width: 100%;
-  max-width: 420px;
+  max-width: 500px;
   box-shadow: var(--shadow-lg);
   border: 1px solid var(--gray-200);
   animation: slideUp 0.4s ease;
@@ -35,9 +35,11 @@
   margin-bottom: 36px;
 }
 
-.login-logo {
-  font-size: 40px;
-  margin-bottom: 12px;
+.login-logo-img {
+  height: 120px;
+  width: auto;
+  margin-bottom: 16px;
+  border-radius: 12px;
 }
 
 .login-title {
@@ -56,21 +58,28 @@
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
 .login-field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
-.login-field label {
+.login-field label,
+fieldset.login-field legend {
   font-size: 13px;
   font-weight: 600;
   color: var(--gray-700);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+fieldset.login-field {
+  border: none;
+  padding: 0;
+  margin: 0;
 }
 
 .login-field input {
@@ -89,33 +98,67 @@
   box-shadow: 0 0 0 3px rgba(224, 123, 57, 0.12);
 }
 
-.profil-choices {
+.choice-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
 
-.profil-btn {
-  padding: 12px 10px;
+.choice-grid.three-cols {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.choice-grid.four-cols {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.choice-btn {
+  padding: 14px 10px;
   border-radius: var(--radius-sm);
   border: 1.5px solid var(--gray-200);
   background: var(--gray-50);
   color: var(--gray-700);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   transition: all 0.2s;
+  cursor: pointer;
+  text-align: center;
 }
 
-.profil-btn:hover {
+.choice-btn:hover {
   border-color: var(--orange);
   background: var(--orange-light);
 }
 
-.profil-btn.active {
+.choice-btn.active {
   border-color: var(--orange);
   background: var(--orange-light);
   color: var(--orange-dark);
   font-weight: 600;
+}
+
+.choice-btn.small {
+  padding: 12px 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.budget-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.budget-input input {
+  width: 100%;
+  padding-right: 40px;
+}
+
+.budget-suffix {
+  position: absolute;
+  right: 16px;
+  color: var(--gray-500);
+  font-weight: 600;
+  font-size: 15px;
 }
 
 .login-error {
@@ -128,14 +171,16 @@
 }
 
 .login-submit {
-  padding: 15px;
+  padding: 16px;
   background: var(--orange);
-  color: white;
+  color: #1a1a1a;
   border-radius: var(--radius-sm);
   font-size: 16px;
   font-weight: 600;
   transition: background 0.2s, transform 0.1s;
-  margin-top: 4px;
+  margin-top: 8px;
+  cursor: pointer;
+  border: none;
 }
 
 .login-submit:hover {
