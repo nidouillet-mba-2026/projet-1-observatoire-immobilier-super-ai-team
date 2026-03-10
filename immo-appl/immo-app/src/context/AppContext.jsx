@@ -1,3 +1,4 @@
+import ANNONCES_REELLES from '../data/annonces_data.js';
 import { createContext, useContext, useState, useEffect } from 'react';
 
 const AppContext = createContext();
@@ -90,50 +91,8 @@ const DESCRIPTIONS_ANNONCE = [
 
 // Génération déterministe (pas de Math.random, prix cohérent surface × prixM2)
 const genAnnonces = () => {
-  const types = ['Appartement T2', 'Appartement T3', 'Appartement T4', 'Maison T3', 'Maison T4'];
-  const quartiers = QUARTIERS_TOULON;
-  const etages = ['RDC', '1er', '2ème', '3ème', '4ème', '5ème', '6ème'];
-  const jours = ['03','07','10','14','18','22','25','28'];
-  const mois  = ['01','02','03','04','05','06','07','08','09','10','11','12'];
-  const imgs = [
-    'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&q=80',
-    'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400&q=80',
-    'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=400&q=80',
-    'https://images.unsplash.com/photo-1554995207-c18c203602cb?w=400&q=80',
-    'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400&q=80',
-    'https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=400&q=80',
-    'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400&q=80',
-    'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&q=80',
-    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&q=80',
-    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&q=80',
-    'https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=400&q=80',
-    'https://images.unsplash.com/photo-1628744448840-55bdb2497bd4?w=400&q=80',
-  ];
-  return Array.from({ length: 24 }, (_, i) => {
-    const surface = 30 + (i * 7 % 110);
-    const prixM2  = 2900 + (i * 113 % 3500);
-    const prix    = surface * prixM2;
-    const type    = types[i % types.length];
-    const quartier = quartiers[i % quartiers.length];
-    const dateAnnonce = `${jours[i % jours.length]}/${mois[(i * 3) % mois.length]}/2025`;
-    return {
-      id: i + 1,
-      prix,
-      prixM2,
-      surface,
-      type,
-      quartier,
-      pieces:        1 + (i % 5),
-      etage:         etages[i % etages.length],
-      img:           imgs[i % imgs.length],
-      niveau:        1 + (i % 3),
-      achatLocation: i % 3 === 0 ? 'Location' : 'Achat',
-      description:   DESCRIPTIONS_ANNONCE[i % DESCRIPTIONS_ANNONCE.length],
-      dateAnnonce,
-    };
-  });
+  return ANNONCES_REELLES;
 };
-
 export const QUARTIERS_LIST = QUARTIERS_TOULON;
 
 const DEFAULT_PROFIL = {
