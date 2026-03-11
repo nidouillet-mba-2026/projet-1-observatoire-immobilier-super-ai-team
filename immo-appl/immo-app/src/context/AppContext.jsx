@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const AppContext = createContext();
 
@@ -80,59 +80,7 @@ export function computeScore(annonce, profil) {
   return computeScoreDetailed(annonce, profil).total;
 }
 
-const DESCRIPTIONS_ANNONCE = [
-  'Beau bien lumineux avec vue dégagée. Cuisine ouverte entièrement équipée, parquet chêne, double vitrage. Très bon état général. Libre de suite.',
-  'Idéalement situé au cœur du quartier, à proximité immédiate des commerces et transports en commun. Copropriété bien entretenue, charges raisonnables.',
-  'Intérieur soigné, rénovation récente (cuisine, salle de bain). Exposition sud, luminosité optimale toute la journée. Cave et parking inclus.',
-  'Résidence sécurisée avec digicode. Prestations soignées : parquet massif, volets roulants électriques, cuisine aménagée et équipée.',
-  'Spacieux et très lumineux avec terrasse privative. Proche de toutes commodités. Idéal pour famille ou investissement locatif à fort rendement.',
-];
-
-// Génération déterministe (pas de Math.random, prix cohérent surface × prixM2)
-const genAnnonces = () => {
-  const types = ['Appartement T2', 'Appartement T3', 'Appartement T4', 'Maison T3', 'Maison T4'];
-  const quartiers = QUARTIERS_TOULON;
-  const etages = ['RDC', '1er', '2ème', '3ème', '4ème', '5ème', '6ème'];
-  const jours = ['03','07','10','14','18','22','25','28'];
-  const mois  = ['01','02','03','04','05','06','07','08','09','10','11','12'];
-  const imgs = [
-    'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&q=80',
-    'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400&q=80',
-    'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=400&q=80',
-    'https://images.unsplash.com/photo-1554995207-c18c203602cb?w=400&q=80',
-    'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400&q=80',
-    'https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=400&q=80',
-    'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400&q=80',
-    'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&q=80',
-    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&q=80',
-    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&q=80',
-    'https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=400&q=80',
-    'https://images.unsplash.com/photo-1628744448840-55bdb2497bd4?w=400&q=80',
-  ];
-  return Array.from({ length: 24 }, (_, i) => {
-    const surface = 30 + (i * 7 % 110);
-    const prixM2  = 2900 + (i * 113 % 3500);
-    const prix    = surface * prixM2;
-    const type    = types[i % types.length];
-    const quartier = quartiers[i % quartiers.length];
-    const dateAnnonce = `${jours[i % jours.length]}/${mois[(i * 3) % mois.length]}/2025`;
-    return {
-      id: i + 1,
-      prix,
-      prixM2,
-      surface,
-      type,
-      quartier,
-      pieces:        1 + (i % 5),
-      etage:         etages[i % etages.length],
-      img:           imgs[i % imgs.length],
-      niveau:        1 + (i % 3),
-      achatLocation: i % 3 === 0 ? 'Location' : 'Achat',
-      description:   DESCRIPTIONS_ANNONCE[i % DESCRIPTIONS_ANNONCE.length],
-      dateAnnonce,
-    };
-  });
-};
+const API_URL = 'http://localhost:5000';
 
 export const QUARTIERS_LIST = QUARTIERS_TOULON;
 
@@ -152,7 +100,8 @@ export function AppProvider({ children }) {
     try { return JSON.parse(localStorage.getItem('immo_favoris') || '[]'); }
     catch { return []; }
   });
-  const [annonces] = useState(genAnnonces);
+  const [annonces, setAnnonces] = useState([]);
+  const [loadingAnnonces, setLoadingAnnonces] = useState(true);
   const [theme, setTheme] = useState('light');
   const [profil, setProfil] = useState(() => {
     try { return JSON.parse(localStorage.getItem('immo_profil') || 'null') || DEFAULT_PROFIL; }
@@ -171,6 +120,14 @@ export function AppProvider({ children }) {
 
   const toggleTheme = () => setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
 
+  // Chargement des annonces réelles depuis l'API
+  useEffect(() => {
+    fetch(`${API_URL}/api/annonces`)
+      .then(r => r.json())
+      .then(data => { setAnnonces(data); setLoadingAnnonces(false); })
+      .catch(() => setLoadingAnnonces(false));
+  }, []);
+
   // Persistance localStorage
   useEffect(() => { localStorage.setItem('immo_favoris', JSON.stringify(favoris)); }, [favoris]);
   useEffect(() => { localStorage.setItem('immo_profil',  JSON.stringify(profil));  }, [profil]);
@@ -181,7 +138,7 @@ export function AppProvider({ children }) {
   }, [theme]);
 
   return (
-    <AppContext.Provider value={{ user, setUser, favoris, toggleFavori, isFavori, profil, setProfil, annonces, theme, toggleTheme }}>
+    <AppContext.Provider value={{ user, setUser, favoris, toggleFavori, isFavori, profil, setProfil, annonces, loadingAnnonces, theme, toggleTheme }}>
       {children}
     </AppContext.Provider>
   );

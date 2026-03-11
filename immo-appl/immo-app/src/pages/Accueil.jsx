@@ -19,7 +19,7 @@ const TRI_OPTIONS_AGENT = [
 ];
 
 export default function Accueil() {
-  const { annonces, profil, user } = useApp();
+  const { annonces, loadingAnnonces, profil, user } = useApp();
   const isAcheteur = user?.profil === 'Acheteur';
 
   const [filtre, setFiltre] = useState('tous');
@@ -89,7 +89,7 @@ export default function Accueil() {
             </div>
             <div className="wb-stats">
               <div className="wb-stat">
-                <span className="wb-stat-val wb-orange">24</span>
+                <span className="wb-stat-val wb-orange">{annonces.length}</span>
                 <span className="wb-stat-label">Annonces actives</span>
               </div>
               <div className="wb-stat">
@@ -152,16 +152,21 @@ export default function Accueil() {
           </div>
         </div>
 
-        <div className="annonces-grid">
-          {sorted.map(annonce => (
-            <AnnonceCard key={annonce.id} annonce={annonce} />
-          ))}
-        </div>
-
-        {sorted.length === 0 && (
-          <div className="empty-state">
-            <p>Aucune annonce pour ce filtre.</p>
-          </div>
+        {loadingAnnonces ? (
+          <div className="empty-state"><p>Chargement des annonces...</p></div>
+        ) : (
+          <>
+            <div className="annonces-grid">
+              {sorted.map(annonce => (
+                <AnnonceCard key={annonce.id} annonce={annonce} />
+              ))}
+            </div>
+            {sorted.length === 0 && (
+              <div className="empty-state">
+                <p>Aucune annonce pour ce filtre.</p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

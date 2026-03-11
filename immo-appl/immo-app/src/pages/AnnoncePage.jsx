@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useApp, computeScoreDetailed } from '../context/AppContext';
@@ -24,6 +25,7 @@ export default function AnnoncePage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { annonces, profil, toggleFavori, isFavori } = useApp();
+  const [copied, setCopied] = useState(false);
 
   const annonce = annonces.find(a => a.id === Number(id));
   if (!annonce) {
@@ -42,7 +44,13 @@ export default function AnnoncePage() {
   const color   = getScoreColor(score);
   const qInfo   = QUARTIER_INFO[annonce.quartier] || { habitants: 0, prixMoyenM2: 0, evol5ans: 0, rendement: 0 };
 
-  const handleCopy = () => navigator.clipboard.writeText(window.location.href);
+  const handleCopy = () => {
+    const lien = annonce.url || window.location.href;
+    navigator.clipboard.writeText(lien).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
 
   return (
     <div className="ap-wrapper">
@@ -80,8 +88,8 @@ export default function AnnoncePage() {
               >
                 {favori ? '♥ Sauvegardé' : '♡ Sauvegarder'}
               </button>
-              <button className="ap-share-btn" onClick={handleCopy} title="Copier le lien">
-                🔗
+              <button className="ap-share-btn" onClick={handleCopy} title="Copier le lien de l'annonce">
+                {copied ? '✓ Copié !' : '🔗 Partager'}
               </button>
             </div>
           </div>
