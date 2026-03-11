@@ -68,7 +68,7 @@ streamlit run app/streamlit_app.py
 
 ## Application deployee
 
-**URL :** (https://ia-super.streamlit.app/) 
+**URL :** (https://projet-1-observatoire-immobilier-super.onrender.com) 
 
 ## Repartition du travail
 
