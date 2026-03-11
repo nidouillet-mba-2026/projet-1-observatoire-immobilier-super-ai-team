@@ -27,9 +27,9 @@ from backend.analysis.recommendation import (
 )
 
 
-# Default path to the sample dataset (relative to project root).
+# Default path to the unified sample dataset (relative to project root).
 _DEFAULT_DATA_PATH = os.path.join(
-    os.path.dirname(__file__), "..", "..", "data", "raw", "toulon_properties.csv"
+    os.path.dirname(__file__), "..", "..", "data", "processed", "unified_toulon_properties.csv"
 )
 
 

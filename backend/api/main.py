@@ -92,6 +92,15 @@ def get_stats() -> Dict:
     }
 
 
+from backend.api.dashboard_builder import build_dashboard_data
+
+@app.get("/api/market/dashboard")
+def get_market_dashboard() -> Dict:
+    """Provides the aggregated multi-dimensional data needed for the React dashboards."""
+    props = service.load_properties()
+    return build_dashboard_data(props)
+
+
 @app.post("/api/score")
 def score_properties(profile: BuyerProfileIn) -> List[Dict]:
     """Returns all properties with their relevancy score against the profile."""
@@ -131,7 +140,191 @@ def score_properties(profile: BuyerProfileIn) -> List[Dict]:
     return formatted_results
 
 
+from backend.analysis.knn import find_knn_opportunities
+
+@app.get("/api/knn_opportunities")
+def get_knn_opportunities() -> List[Dict]:
+    """Returns the top 5 most undervalued properties using a k-NN algorithm."""
+    props = service.load_properties()
+    # Find the top opportunities using our algorithm
+    opportunities = find_knn_opportunities(props, k=5)
+    
+    # We return the top 5
+    formatted_ops = []
+    for opt in opportunities[:5]:
+        p = opt["property"]
+        formatted_ops.append({
+            "underval": opt["undervaluation_pct"],
+            "avgPm2": opt["avg_neighbor_pm2"],
+            "prix": p.price,
+            "pm2": p.price_per_m2,
+            "surf": p.surface_m2,
+            "type": p.property_type.capitalize(),
+            "quartier": p.district,
+            "neighbors": [
+                {"quartier": n.district, "surf": n.surface_m2, "pm2": n.price_per_m2} 
+                for n in opt["neighbors"]
+            ]
+        })
+    return formatted_ops
+
+
+from fastapi.responses import Response
+from fpdf import FPDF
+
+@app.get("/api/report/{prop_id}")
+def generate_single_property_report(prop_id: int):
+    """Generates a comprehensive PDF report file for a given property ID."""
+    props = service.load_properties()
+    # Find the matching property object
+    prop = next((p for p in props if p.id == prop_id), None)
+    
+    if not prop:
+        return Response(content="Property not found.", status_code=404)
+        
+    stats = service.get_market_statistics()
+    # 1. Market Comparison
+    city_avg = stats.avg_price_per_m2
+    district_avg = stats.by_district.get(prop.district, type("M", (), {"avg_price_per_m2": city_avg})).avg_price_per_m2
+    pm2 = prop.price_per_m2
+    vs_city = round((pm2 - city_avg) / city_avg * 100, 1) if city_avg else 0
+    vs_dist = round((pm2 - district_avg) / district_avg * 100, 1) if district_avg else 0
+    
+    # 2. OLS Prediction
+    pred = service.predict_property_value({
+        "surface_m2": prop.surface_m2,
+        "rooms": prop.rooms,
+        "floor": prop.floor,
+        "year_built": prop.year_built,
+        "distance_to_center_km": prop.distance_to_center_km
+    })
+    predicted_val = pred.get("predicted_price", 0.0)
+    diff_pred = prop.price - predicted_val
+    over_under = "Surévalué" if diff_pred > 0 else ("Sous-évalué" if diff_pred < 0 else "Au prix exact")
+    
+    # 3. Opportunity Score
+    score_res = service.score_property(prop)
+    composite = round(score_res.get("composite_score", 0), 1)
+
+    # 4. Generate PDF
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    
+    # Enable latin-1 fallback replacing missing utf-8 chars (since FPDF core fonts are latin1)
+    
+    # Title
+    pdf.set_font("helvetica", "B", 18)
+    # Replaced accented chars in title to avoid core font encoding issues
+    clean_title = (prop.titre or f"Bien #{prop.id}").encode('latin-1', 'replace').decode('latin-1')
+    pdf.cell(0, 10, f"Rapport d'Analyse : {clean_title}", new_x="LMARGIN", new_y="NEXT", align="C")
+    pdf.ln(10)
+    
+    # Section 1
+    pdf.set_font("helvetica", "B", 14)
+    pdf.cell(0, 8, "1. Informations Generales", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("helvetica", "", 12)
+    pdf.cell(0, 6, f"Type : {prop.property_type.capitalize()}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"Quartier : {prop.district.encode('latin-1', 'replace').decode('latin-1')}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"Surface : {prop.surface_m2} m2", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"Pieces : {prop.rooms} {('(Etage ' + str(prop.floor) + ')' if prop.floor > 0 else '')}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"Prix affiche : {prop.price:,.0f} EUR", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"Prix au m2 : {pm2:,.0f} EUR/m2", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(5)
+    
+    # Section 2
+    pdf.set_font("helvetica", "B", 14)
+    pdf.cell(0, 8, "2. Analyse de Positionnement Marche", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("helvetica", "", 12)
+    pdf.cell(0, 6, f"Moyenne globale (Toulon) : {city_avg:,.0f} EUR/m2", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"Moyenne du quartier : {district_avg:,.0f} EUR/m2", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"Difference vs Ville : {'+' if vs_city > 0 else ''}{vs_city}%", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"Difference vs Quartier : {'+' if vs_dist > 0 else ''}{vs_dist}%", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(5)
+    
+    # Section 3
+    pdf.set_font("helvetica", "B", 14)
+    pdf.cell(0, 8, "3. Modele Predictif (Regression OLS)", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("helvetica", "", 12)
+    pdf.cell(0, 6, f"Estimation du prix juste : {predicted_val:,.0f} EUR", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"Ecart constate : {diff_pred:,.0f} EUR", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"Ce bien est statistiquement : {over_under}", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(5)
+    
+    # Section 4
+    pdf.set_font("helvetica", "B", 14)
+    pdf.cell(0, 8, "4. Score d'Opportunite Global", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("helvetica", "B", 16)
+    pdf.set_text_color(0, 102, 51) if composite >= 65 else pdf.set_text_color(204, 0, 0)
+    pdf.cell(0, 10, f"Score Compose : {composite} / 100", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_text_color(0, 0, 0)
+    pdf.set_font("helvetica", "I", 10)
+    pdf.cell(0, 6, "Un score > 65 indique une affaire potentielle solide.", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(10)
+    
+    pdf.set_font("helvetica", "I", 8)
+    pdf.set_text_color(150, 150, 150)
+    pdf.cell(0, 5, "Rapport genere automatiquement par ToulonFindAI.", new_x="LMARGIN", new_y="NEXT", align="C")
+
+    # Return raw PDF bytes
+    # pdf.output() yields a bytearray representing the PDF document
+    pdf_bytes = pdf.output()
+
+    return Response(
+        content=bytes(pdf_bytes),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename=Rapport_ToulonFindAI_{prop.id}.pdf"}
+    )
+    
 @app.post("/api/predict")
 def predict_price(features: PropertyFeaturesIn) -> Dict:
     """Predicts a property price given features."""
     return service.predict_property_value(features.dict())
+
+import math
+from backend.analysis.regression import SimpleLinearRegression
+
+@app.get("/api/regression")
+def get_regression_data() -> Dict:
+    """Provides simple linear regression (Surface -> Price) data for the dashboard."""
+    props = service.load_properties()
+    x = [p.surface_m2 for p in props if p.surface_m2 > 0 and p.price > 0]
+    y = [p.price for p in props if p.surface_m2 > 0 and p.price > 0]
+
+    if not x:
+        return {}
+
+    model = SimpleLinearRegression()
+    model.fit(x, y)
+
+    scatter_points = [{"surface": xi, "prix": yi} for xi, yi in zip(x, y)][:200]
+    
+    min_x = min(x)
+    max_x = max(x)
+    regression_line = [
+        {"surface": min_x, "prix": model.predict(min_x)},
+        {"surface": max_x, "prix": model.predict(max_x)}
+    ]
+    
+    residuals = []
+    sse = 0
+    for i, (xi, yi) in enumerate(zip(x, y)):
+        pred = model.predict(xi)
+        r = yi - pred
+        sse += r * r
+        if i < 100:
+            residuals.append({"n": i, "r": round(r, 2)})
+            
+    mse = sse / len(x)
+    rmse = math.sqrt(mse)
+
+    return {
+        "n_transactions": len(x),
+        "r_squared": round(model.r_squared, 4),
+        "scatter_points": scatter_points,
+        "regression_line": regression_line,
+        "alpha": round(model.intercept, 2),
+        "beta": round(model.slope, 2),
+        "rmse": round(rmse, 2),
+        "residuals": residuals
+    }

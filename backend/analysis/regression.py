@@ -164,19 +164,19 @@ class MultipleLinearRegression:
 
         try:
             XtX_inv = _invert_matrix(XtX)
+            self.coefficients = _mat_vec_mul(XtX_inv, Xty)
+            
+            # R²
+            y_mean = sum(y) / n
+            y_pred = [self.predict(row) for row in X]
+            ss_res = sum((yi - yp) ** 2 for yi, yp in zip(y, y_pred))
+            ss_tot = sum((yi - y_mean) ** 2 for yi in y)
+            self.r_squared = 1 - (ss_res / ss_tot) if ss_tot != 0 else 0.0
+
         except ValueError:
             # Singular matrix — return zero coefficients
             self.coefficients = [0.0] * (len(X[0]) + 1)
-            return self
-
-        self.coefficients = _mat_vec_mul(XtX_inv, Xty)
-
-        # R²
-        y_mean = sum(y) / n
-        y_pred = [self.predict(row) for row in X]
-        ss_res = sum((yi - yp) ** 2 for yi, yp in zip(y, y_pred))
-        ss_tot = sum((yi - y_mean) ** 2 for yi in y)
-        self.r_squared = 1 - (ss_res / ss_tot) if ss_tot != 0 else 0.0
+            self.r_squared = 0.0
 
         return self
 
@@ -209,33 +209,32 @@ def predict_property_value(
     properties: List[Property],
     feature_names: Optional[List[str]] = None,
 ) -> Dict:
-    """Train a multiple-regression model on *properties* and predict for *property_data*.
+    """Train a simple regression model on *properties* and predict for *property_data*.
 
     Args:
         property_data: Dict with at least the keys in *feature_names*.
         properties:    Training set of Property objects.
-        feature_names: Features to use (defaults to DEFAULT_FEATURES).
+        feature_names: Features to use (defaults to 'surface_m2' for robustness).
 
     Returns:
         Dict with keys: predicted_price, r_squared, features_used.
     """
-    names = feature_names or DEFAULT_FEATURES
-
-    X = [_extract_features(p, names) for p in properties]
+    # Use just surface to ensure robust prediction on small datasets
+    X = [p.surface_m2 for p in properties]
     y = [p.price for p in properties]
 
-    model = MultipleLinearRegression()
+    model = SimpleLinearRegression()
     model.fit(X, y)
 
-    input_features = [float(property_data.get(name, 0)) for name in names]
-    predicted = model.predict(input_features)
+    input_surf = float(property_data.get("surface_m2", 0))
+    predicted = model.predict(input_surf)
 
     return {
         "predicted_price": round(max(predicted, 0), 2),
         "r_squared": round(model.r_squared, 4),
-        "features_used": names,
+        "features_used": ["surface_m2"],
         "coefficients": {
-            name: round(coef, 4)
-            for name, coef in zip(["intercept"] + names, model.coefficients)
+            "intercept": round(model.intercept, 4),
+            "surface_m2": round(model.slope, 4)
         },
     }

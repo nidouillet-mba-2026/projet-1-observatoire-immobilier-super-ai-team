@@ -85,6 +85,7 @@ class MarketStats:
         total_properties: Number of properties analysed.
         avg_price:        Mean listing price.
         median_price:     Median listing price.
+        variance_price:   Variance of prices.
         std_price:        Standard deviation of prices.
         avg_price_per_m2: Mean price per m².
         price_range:      Tuple (min_price, max_price).
@@ -93,6 +94,7 @@ class MarketStats:
     total_properties: int = 0
     avg_price: float = 0.0
     median_price: float = 0.0
+    variance_price: float = 0.0
     std_price: float = 0.0
     avg_price_per_m2: float = 0.0
     price_range: tuple = (0.0, 0.0)

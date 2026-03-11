@@ -35,13 +35,18 @@ def median(values: List[float]) -> float:
     return sorted_vals[mid]
 
 
-def std_dev(values: List[float]) -> float:
-    """Population standard deviation (σ)."""
+def variance(values: List[float]) -> float:
+    """Population variance (σ²)."""
     if len(values) < 2:
         return 0.0
     avg = mean(values)
-    variance = sum((x - avg) ** 2 for x in values) / len(values)
-    return math.sqrt(variance)
+    var = sum((x - avg) ** 2 for x in values) / len(values)
+    return var
+
+
+def std_dev(values: List[float]) -> float:
+    """Population standard deviation (σ)."""
+    return math.sqrt(variance(values))
 
 
 def percentile(values: List[float], p: float) -> float:
@@ -93,6 +98,7 @@ def compute_market_stats(properties: List[Property]) -> MarketStats:
         total_properties=len(properties),
         avg_price=round(mean(prices), 2),
         median_price=round(median(prices), 2),
+        variance_price=round(variance(prices), 2),
         std_price=round(std_dev(prices), 2),
         avg_price_per_m2=round(mean(prices_m2), 2),
         price_range=(min(prices), max(prices)),
