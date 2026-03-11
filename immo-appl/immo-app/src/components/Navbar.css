@@ -1,0 +1,169 @@
+/* Importation de la police */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap');
+
+.logo-container {
+    font-family: 'Montserrat', sans-serif;
+    display: flex;
+    align-items: center;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+}
+
+.brand-main {
+    color: #1A365D;
+    font-weight: 800;
+    font-size: 2.5rem;
+}
+
+.brand-accent {
+    color: #FFF;
+    font-weight: 500;
+    font-size: 2.5rem;
+    margin-left: 2px;
+}
+
+
+.navbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  z-index: 1000;
+  transition: background 0.3s;
+}
+
+/* ── Couleur selon le profil ── */
+.navbar-acheteur {
+  background: linear-gradient(135deg, #1d4ed8 0%, #4f46e5 100%);
+  box-shadow: 0 2px 16px rgba(29, 78, 216, 0.35);
+}
+.navbar-agent {
+  background: #ada5a0;
+  box-shadow: 0 2px 12px rgba(173, 165, 160, 0.3);
+}
+
+/* ── Gauche ── */
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.navbar-avatar {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.25);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 2px solid rgba(255,255,255,0.4);
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.navbar-avatar:hover { background: rgba(0,0,0,0.4); }
+
+.navbar-profile-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 20px;
+  padding: 4px 10px;
+}
+.profile-emoji  { font-size: 14px; }
+.profile-label  { font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 0.04em; }
+
+.navbar-favoris-btn {
+  background: rgba(0,0,0,0.2);
+  border-radius: 20px;
+  padding: 6px 12px;
+  color: #fff;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  transition: background 0.2s;
+}
+.navbar-favoris-btn:hover { background: rgba(0,0,0,0.35); }
+
+.favoris-badge {
+  background: white;
+  border-radius: 50%;
+  width: 18px; height: 18px;
+  font-size: 11px; font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.navbar-acheteur .favoris-badge { color: #1d4ed8; }
+.navbar-agent    .favoris-badge { color: #ada5a0; }
+
+/* ── Centre ── */
+.navbar-center {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+}
+
+.navbar-logo-svg {
+  height: 36px;
+  width: auto;
+}
+
+/* ── Droite ── */
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.navbar-login-name {
+  color: rgba(255,255,255,0.9);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.theme-toggle {
+  font-size: 18px;
+  background: transparent;
+  padding: 6px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+.theme-toggle:hover { background: rgba(255,255,255,0.15); }
+
+.navbar-logout {
+  background: rgba(0,0,0,0.2);
+  color: #fff;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.2s;
+  border: 1px solid rgba(255,255,255,0.25);
+}
+.navbar-logout:hover { background: rgba(0,0,0,0.35); }
+
+/* ── Mode sombre ── */
+body.dark .navbar-agent {
+  background: #3d3a38;
+  box-shadow: 0 2px 12px rgba(61, 58, 56, 0.5);
+}
+body.dark .navbar-acheteur {
+  background: linear-gradient(135deg, #1e3a5f 0%, #312e81 100%);
+  box-shadow: 0 2px 16px rgba(30, 58, 95, 0.5);
+}
+body.dark .navbar-agent .favoris-badge { color: #3d3a38; }
+body.dark .navbar-acheteur .favoris-badge { color: #1e3a5f; }
