@@ -104,6 +104,75 @@ def compute_regression():
     }
 
 
+def load_annonces_data():
+    """Charge les annonces depuis annonces_images.csv."""
+    import re
+    filepath = os.path.join(PROJECT_ROOT, 'data', 'annonces_images.csv')
+    annonces = []
+    seen = set()
+    with open(filepath, 'r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for i, row in enumerate(reader):
+            try:
+                surface_raw = row.get('surface', '').replace('m²', '').replace('m2', '').strip()
+                surface = float(surface_raw) if surface_raw else 0
+
+                prix_raw = row.get('prix', '').replace(' ', '').replace('€', '').replace('\xa0', '').strip()
+                prix = float(prix_raw) if prix_raw else 0
+
+                prix_m2_raw = row.get('prix_m2', '').strip()
+                prix_m2 = int(float(prix_m2_raw)) if prix_m2_raw else (round(prix / surface) if surface > 0 else 0)
+
+                titre = row.get('titre', '')
+                pieces_match = re.search(r'(\d+)\s*pi[èe]ce', titre, re.IGNORECASE)
+                pieces = int(pieces_match.group(1)) if pieces_match else 1
+
+                type_raw = row.get('type', '').strip().lower()
+                type_label = f"Maison T{pieces}" if 'maison' in type_raw else f"Appartement T{pieces}"
+
+                url = row.get('url', '')
+                achat_location = 'Location' if 'location' in url.lower() else 'Achat'
+
+                img = row.get('image_url', '') if row.get('image_status') == 'ok' else ''
+
+                # Dédoublonnage par titre+prix
+                cle = (titre.strip().lower(), str(round(prix)))
+                if cle in seen:
+                    continue
+                seen.add(cle)
+
+                annonces.append({
+                    'id': i + 1,
+                    'titre': titre,
+                    'prix': prix,
+                    'prixM2': prix_m2,
+                    'surface': surface,
+                    'quartier': row.get('quartier', '').strip(),
+                    'type': type_label,
+                    'pieces': pieces,
+                    'etage': 'N/C',
+                    'niveau': 1,
+                    'img': img,
+                    'url': url,
+                    'description': row.get('description', '').strip(),
+                    'achatLocation': achat_location,
+                    'dateAnnonce': row.get('date_publication', ''),
+                    'image_status': row.get('image_status', ''),
+                })
+            except (ValueError, KeyError):
+                continue
+    return annonces
+
+
+@app.route('/api/annonces', methods=['GET'])
+def get_annonces():
+    """Retourne toutes les annonces avec images."""
+    try:
+        return jsonify(load_annonces_data())
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/regression', methods=['GET'])
 def get_regression():
     """Endpoint pour obtenir les données de régression."""

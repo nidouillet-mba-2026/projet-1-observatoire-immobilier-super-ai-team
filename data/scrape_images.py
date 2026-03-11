@@ -36,30 +36,51 @@ def bienici_annonce_id(url: str) -> str:
     return path.split("/")[-1]
 
 
-def get_bienici_image(annonce_url: str) -> tuple[str, str]:
-    """Interroge l'API bienici pour récupérer la première photo."""
+def _parse_bienici_date(data: dict) -> str:
+    """Extrait et formate la date de publication depuis la réponse API Bienici."""
+    MOIS = {
+        1: "janvier", 2: "février", 3: "mars", 4: "avril",
+        5: "mai", 6: "juin", 7: "juillet", 8: "août",
+        9: "septembre", 10: "octobre", 11: "novembre", 12: "décembre",
+    }
+    raw = data.get("modificationDate") or data.get("thresholdDate", "")
+    if not raw or raw.startswith("1970"):
+        return ""
+    try:
+        # Format: 2026-03-07T05:06:03.342Z
+        parts = raw[:10].split("-")
+        y, m, d = int(parts[0]), int(parts[1]), int(parts[2])
+        return f"{d} {MOIS[m]} {y}"
+    except Exception:
+        return ""
+
+
+def get_bienici_image(annonce_url: str) -> tuple[str, str, str]:
+    """Interroge l'API bienici pour récupérer la première photo et la date.
+    Retourne (image_url, status, date_publication).
+    """
     annonce_id = bienici_annonce_id(annonce_url)
     api_url = f"https://www.bienici.com/realEstateAd.json?id={annonce_id}"
 
     content, status = fetch(api_url)
 
     if status == 404:
-        return "", "annonce_supprimee"
+        return "", "annonce_supprimee", ""
     if not content:
-        return "", "erreur"
+        return "", "erreur", ""
 
     try:
         data = json.loads(content)
+        date_pub = _parse_bienici_date(data)
         photos = data.get("photos", [])
         if photos:
-            # Prend l'URL file.bienici.com avec dimensions miniature
             url = photos[0].get("url", "")
             if url:
-                return url + "?width=600&height=370&fit=cover", "ok"
+                return url + "?width=600&height=370&fit=cover", "ok", date_pub
     except (json.JSONDecodeError, KeyError):
         pass
 
-    return "", "erreur"
+    return "", "erreur", ""
 
 
 def extract_og_image(html: str) -> str:
@@ -105,27 +126,29 @@ def get_seloger_image(annonce_url: str) -> tuple[str, str]:
     return "", "erreur"
 
 
-def get_image_url(annonce_url: str) -> tuple[str, str]:
+def get_image_url(annonce_url: str) -> tuple[str, str, str]:
     """
-    Retourne (image_url, status)
-    - image_url : URL de la miniature ou ""
-    - status    : "ok" | "erreur" | "annonce_supprimee"
+    Retourne (image_url, status, date_publication)
+    - image_url       : URL de la miniature ou ""
+    - status          : "ok" | "erreur" | "annonce_supprimee"
+    - date_publication: "7 mars 2026" ou ""
     """
     if not annonce_url or not annonce_url.startswith("http"):
-        return "", "erreur"
+        return "", "erreur", ""
 
     if "bienici.com" in annonce_url:
         return get_bienici_image(annonce_url)
 
     if "seloger.com" in annonce_url:
-        return get_seloger_image(annonce_url)
+        img, status = get_seloger_image(annonce_url)
+        return img, status, ""
 
     # Site inconnu : tentative og:image
     content, status = fetch(annonce_url)
     if status == 404:
-        return "", "annonce_supprimee"
+        return "", "annonce_supprimee", ""
     img = extract_og_image(content) if content else ""
-    return (img, "ok") if img else ("", "erreur")
+    return (img, "ok", "") if img else ("", "erreur", "")
 
 
 def enrich_with_images(input_file=None, output_file=None):
@@ -148,14 +171,14 @@ def enrich_with_images(input_file=None, output_file=None):
         url = annonce.get("url", "")
         print(f"[{i+1}/{len(annonces)}] {annonce.get('titre', '')[:45]}...")
 
-        image_url, status = get_image_url(url)
+        image_url, status, date_pub = get_image_url(url)
         stats[status] += 1
-        print(f"  → {status} | {image_url[:80] if image_url else '(aucune)'}")
+        print(f"  -> {status} | {image_url[:80] if image_url else '(aucune)'}")
 
-        results.append({**annonce, "image_url": image_url, "image_status": status})
+        results.append({**annonce, "image_url": image_url, "image_status": status, "date_publication": date_pub})
         time.sleep(1.2)
 
-    fields = list(annonces[0].keys()) + ["image_url", "image_status"]
+    fields = list(annonces[0].keys()) + ["image_url", "image_status", "date_publication"]
     with open(output_file, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
         writer.writeheader()
