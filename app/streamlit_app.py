@@ -30,8 +30,10 @@ from backend.services.property_service import PropertyService
 
 
 @st.cache_resource
-def get_service() -> PropertyService:
-    """Return a singleton PropertyService for the session."""
+def get_service(cache_version: int = 1) -> PropertyService:
+    """Return a singleton PropertyService for the session.
+    The cache_version parameter is used to bust the cache when data models change.
+    """
     return PropertyService()
 
 
@@ -56,14 +58,79 @@ section = st.sidebar.radio(
     "Navigate",
     [
         "📊 Market Overview",
+        "🏠 Property Search & Listings",
         "💰 Price Prediction",
         "🔍 Opportunity Detector",
         "🎯 Buyer Recommendations",
     ],
 )
 
+# ========================== PROPERTY SEARCH ================================
+if section == "🏠 Property Search & Listings":
+    st.header("🏠 Property Search & Listings")
+    
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("Filters")
+    props = service.load_properties()
+    
+    # Filter controls
+    max_budget = st.sidebar.slider("Max Budget (€)", 50000, 2000000, 500000, 10000)
+    min_surface = st.sidebar.slider("Min Surface (m²)", 10, 300, 20, 5)
+    prop_type = st.sidebar.selectbox("Property Type", ["All", "Appartement", "Maison"])
+    
+    # Apply filters
+    filtered = [p for p in props if p.price <= max_budget and p.surface_m2 >= min_surface]
+    if prop_type != "All":
+        filtered = [p for p in filtered if p.property_type.lower() == prop_type.lower()]
+        
+    st.write(f"**{len(filtered)}** properties match your criteria.")
+    
+    # Prepare Map Data
+    import pandas as pd
+    import random
+    
+    DISTRICT_COORDS = {
+        "Mourillon": [43.107, 5.940],
+        "Centre-Ville": [43.125, 5.930],
+        "Saint-Jean du Var": [43.128, 5.950],
+        "La Rode": [43.118, 5.942],
+        "Pont du Las": [43.131, 5.910],
+        "Le Pradet": [43.106, 6.020],
+        "La Seyne": [43.101, 5.882],
+        "Siblas": [43.132, 5.936],
+    }
+    
+    map_data = []
+    for p in filtered:
+        base_coords = DISTRICT_COORDS.get(p.district, [43.125, 5.930])
+        map_data.append({
+            "lat": base_coords[0] + random.uniform(-0.005, 0.005),
+            "lon": base_coords[1] + random.uniform(-0.005, 0.005),
+            "price": p.price
+        })
+    
+    if map_data:
+        st.map(pd.DataFrame(map_data))
+        
+    # Gallery Feed
+    st.subheader("Property Feed")
+    for i in range(0, len(filtered), 3):
+        cols = st.columns(3)
+        for j, col in enumerate(cols):
+            if i + j < len(filtered):
+                p = filtered[i + j]
+                with col:
+                    st.markdown(f"#### €{p.price:,.0f}")
+                    st.write(f"**{p.district.capitalize()}** • {p.property_type.title()}")
+                    st.caption(f"{p.surface_m2} m² • {p.rooms} rooms")
+                    if p.price_per_m2:
+                        st.caption(f"€{p.price_per_m2:,.0f}/m²")
+                    if p.url:
+                        st.markdown(f"[View Listing]({p.url})")
+                    st.divider()
+
 # ========================== MARKET OVERVIEW ================================
-if section == "📊 Market Overview":
+elif section == "📊 Market Overview":
     st.header("📊 Market Overview")
 
     # Fetch data
@@ -71,11 +138,15 @@ if section == "📊 Market Overview":
     stats = service.get_market_statistics()
 
     # --- KPI row ---
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4, col5 = st.columns(5)
     col1.metric("Total Properties", stats.total_properties)
     col2.metric("Avg Price", f"€{stats.avg_price:,.0f}")
     col3.metric("Median Price", f"€{stats.median_price:,.0f}")
     col4.metric("Avg €/m²", f"€{stats.avg_price_per_m2:,.0f}")
+    
+    # Safe getattr fetch in case module cache is out of sync
+    var_price = getattr(stats, "variance_price", 0.0)
+    col5.metric("Variance", f"€²{var_price:,.0f}")
 
     st.divider()
 
@@ -92,10 +163,35 @@ if section == "📊 Market Overview":
         })
     st.table(district_rows)
 
-    # --- Price distribution (simple bar chart) ---
-    st.subheader("Price Distribution by District")
-    chart_data = {ds.district: ds.avg_price for ds in stats.by_district.values()}
-    st.bar_chart(chart_data, use_container_width=True)
+    # --- Detailed Analytics Charts ---
+    st.subheader("Market Analytics")
+    colA, colB = st.columns(2)
+    
+    with colA:
+        st.write("**Average Price by District (€)**")
+        chart_data = {ds.district: ds.avg_price for ds in stats.by_district.values()}
+        st.bar_chart(chart_data, use_container_width=True)
+        
+    with colB:
+        st.write("**Average Price per m² by District (€)**")
+        chart_data_m2 = {ds.district: ds.avg_price_per_m2 for ds in stats.by_district.values()}
+        st.bar_chart(chart_data_m2, use_container_width=True)
+
+    st.write("**Surface Area vs. Asking Price**")
+    import pandas as pd
+    scatter_data = pd.DataFrame([{
+        "Surface (m²)": p.surface_m2,
+        "Price (€)": p.price,
+        "District": p.district
+    } for p in properties])
+    
+    st.scatter_chart(
+        data=scatter_data,
+        x="Surface (m²)",
+        y="Price (€)",
+        color="District",
+        use_container_width=True
+    )
 
 # ========================== PRICE PREDICTION ===============================
 elif section == "💰 Price Prediction":
