@@ -1,3 +1,4 @@
+[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/JY1xUUGg)
 # Projet 1 : Observatoire du Marche Immobilier Toulonnais
 
 ## Objectif
@@ -15,21 +16,40 @@ Consultez l'onglet **Actions** > dernier workflow > **Job Summary** pour voir vo
 
 ```
 .
-├── analysis/
-│   ├── stats.py          <- Fonctions statistiques from scratch (Grus ch.5)
-│   ├── regression.py     <- Regression lineaire from scratch (Grus ch.14)
-│   └── scoring.py        <- Score d'opportunite par bien
-├── app/
-│   └── streamlit_app.py  <- Dashboard principal (ou app.py a la racine)
+ToulonFindAI project/
 ├── data/
-│   ├── dvf_toulon.csv    <- Donnees DVF (>= 500 transactions)
-│   └── annonces.csv      <- Annonces reelles collectees
+│   ├── raw/                          
+│   └── processed/                    
+├── backend/
+│   ├── __init__.py
+│   ├── api/                          
+│   │   ├── __init__.py
+│   │   └── main.py                  
+│   ├── models/
+│   │   ├── __init__.py
+│   │   └── data_models.py           
+│   ├── loaders/
+│   │   ├── __init__.py
+│   │   └── csv_loader.py            
+│   ├── analysis/
+│   │   ├── __init__.py
+│   │   ├── stats.py                 
+│   │   ├── regression.py             
+│   │   ├── scoring.py               
+│   │   └── recommendation.py         
+│   └── services/
+│       ├── __init__.py
+│       └── property_service.py       
+├── app/
+│   └── streamlit_app.py             
+├── immo-app/                         
+├── scripts/
+│   └── merge_datasets.py            
 ├── tests/
-│   ├── test_stats.py     <- Vos tests unitaires pour stats.py
-│   ├── test_regression.py <- Vos tests unitaires pour regression.py
-│   └── test_auto_eval.py <- Tests d'evaluation (NE PAS MODIFIER)
-├── requirements.txt
-└── README.md             <- Ce fichier (ajoutez l'URL de deploiement !)
+│   ├── test_smoke.py                 
+│   └── test_stats.py                 
+├── README.md                       
+└── requirements.txt 
 ```
 
 ## Installation
@@ -48,16 +68,17 @@ streamlit run app/streamlit_app.py
 
 ## Application deployee
 
-**URL :** <!-- REMPLACEZ PAR VOTRE URL DE DEPLOIEMENT -->
+**URL :** (https://projet-1-observatoire-immobilier-super.onrender.com) 
 
 ## Repartition du travail
 
 | Membre | Role | Contributions principales |
 |--------|------|--------------------------|
-| Prenom NOM | Data Engineer | ... |
-| Prenom NOM | Data Scientist | ... |
-| Prenom NOM | AI Engineer | ... |
-| Prenom NOM | Frontend / DevOps | ... |
+| Melina Barbieux | Data Engineer | Analyse du marché, Scraping, Read Me & Déploiement|
+| Brigitte raissa Simen ossanguem | Data Engineer | Analyse du marché, Scraping, Frontend |
+| Maxence N'goma | Data Scientist | Scraping, Connexion Scraping & Frontend |
+| Marc ivan stevie Nguidjol | AI Engineer | Backend, Connexion Frontend & Backend |
+| Joe Deriu | Frontend / DevOps | Frontend & Algorithme |
 
 ## Donnees
 
