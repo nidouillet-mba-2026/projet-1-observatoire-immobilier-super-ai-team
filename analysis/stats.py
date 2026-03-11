@@ -45,7 +45,7 @@ def covariance(xs: list[float], ys: list[float]) -> float:
         return 0.0
     x_bar = mean(xs)
     y_bar = mean(ys)
-    return sum((x - x_bar) * (y - y_bar) for x, y in zip(xs, ys)) / (n - 1)
+    return sum((x - x_bar) * (y - y_bar) for x, y in zip(xs, ys)) / n
 
 
 def correlation(xs: list[float], ys: list[float]) -> float:
