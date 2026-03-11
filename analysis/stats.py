@@ -30,7 +30,7 @@ def variance(xs: list[float]) -> float:
     if n < 2:
         return 0.0
     x_bar = mean(xs)
-    return sum((x - x_bar) ** 2 for x in xs) / (n - 1)
+    return sum((x - x_bar) ** 2 for x in xs) / n
 
 
 def standard_deviation(xs: list[float]) -> float:
