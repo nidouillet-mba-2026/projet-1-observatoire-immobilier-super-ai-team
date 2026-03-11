@@ -55,11 +55,11 @@ streamlit run app/streamlit_app.py
 
 | Membre | Role | Contributions principales |
 |--------|------|--------------------------|
-| Melina BARBIEUX | Data Engineer | ... |
-| Brigitte raissa Simen ossanguem | Data Engineer | ... |
-| Maxence N'goma | Data Scientist | ... |
-| Marc ivan stevie Nguidjol | AI Engineer | ... |
-| Joe Deriu | Frontend / DevOps | ... |
+| Melina BARBIEUX | Data Engineer | Analyse du marché, Scraping, Read Me & Déploiement|
+| Brigitte raissa Simen ossanguem | Data Engineer | Analyse du marché, Scraping, Frontend |
+| Maxence N'goma | Data Scientist | Scraping, Connexion Scraping & Frontend |
+| Marc ivan stevie Nguidjol | AI Engineer | Backend, Connexion Frontend & Backend |
+| Joe Deriu | Frontend / DevOps | Frontend & Algorithme |
 
 ## Donnees
 
